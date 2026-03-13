@@ -1,0 +1,350 @@
+﻿let map;
+let adminLayer;
+let gridLayer;
+let gridVisible = false;
+
+const state = {
+  selectedAdmin: null,
+  lastBbox: null,
+  adminIndex: {},
+  provinces: [],
+  citiesByProvince: {},
+  districtsByCity: {},
+};
+
+function initMap() {
+  map = L.map("map", { zoomControl: false }).setView([35.8617, 104.1954], 4.5);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "© OpenStreetMap",
+  }).addTo(map);
+
+  fetch("/static/geo/china_admin_sample.geojson")
+    .then((res) => res.json())
+    .then((geo) => {
+      adminLayer = L.geoJSON(geo, {
+        style: {
+          color: "#1a8a5b",
+          weight: 2,
+          fillColor: "#f3b24a",
+          fillOpacity: 0.2,
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on("click", () => selectAdmin(feature, layer));
+        },
+      }).addTo(map);
+      map.fitBounds(adminLayer.getBounds(), { padding: [30, 30] });
+      buildAdminHierarchy();
+      populateProvinceSelect();
+    })
+    .catch(() => {
+      document.getElementById("mapInfo").innerText = "未加载行政区 GeoJSON，请替换 static/geo/china_admin_sample.geojson";
+    });
+}
+
+function selectAdmin(feature, layer) {
+  const props = feature.properties || {};
+  const name = props.name || "未知区域";
+  const adminCode = props.adcode || "";
+  state.selectedAdmin = adminCode;
+  const bbox = layer.getBounds();
+  state.lastBbox = [bbox.getWest(), bbox.getSouth(), bbox.getEast(), bbox.getNorth()];
+  document.getElementById("mapInfo").innerText = `${name} (${adminCode})`;
+  setSelectValue("districtSelect", adminCode);
+  refreshGrid();
+  refreshSensors();
+  refreshWeather();
+}
+
+function renderGrid(cells) {
+  if (gridLayer) {
+    gridLayer.remove();
+  }
+  gridLayer = L.layerGroup();
+  cells.forEach((cell) => {
+    const [minLon, minLat, maxLon, maxLat] = cell.bbox;
+    const rect = L.rectangle(
+      [
+        [minLat, minLon],
+        [maxLat, maxLon],
+      ],
+      { color: "#1f1b16", weight: 1, fillOpacity: 0.05 }
+    );
+    gridLayer.addLayer(rect);
+  });
+  if (gridVisible) {
+    gridLayer.addTo(map);
+  }
+}
+
+function refreshGrid() {
+  if (!state.lastBbox) return;
+  const res = document.getElementById("gridResolution").value || "1";
+  const bboxStr = state.lastBbox.join(",");
+  fetch(`/api/grid?bbox=${bboxStr}&resolution_km=${res}`)
+    .then((res) => res.json())
+    .then((data) => {
+      renderGrid(data.grid || []);
+    })
+    .catch(() => {});
+}
+
+function refreshSensors() {
+  const adminCode = document.getElementById("adminCodeSelect").value || "";
+  fetch(`/api/latest?admin_code=${adminCode}&limit=50`)
+    .then((res) => res.json())
+    .then((data) => {
+      const rows = data.data || [];
+      document.getElementById("deviceCount").innerText = `${rows.length}`;
+      const table = document.getElementById("sensorTable");
+      table.innerHTML = "";
+      rows.slice(0, 6).forEach((row) => {
+        const div = document.createElement("div");
+        div.className = "table-row";
+        div.innerHTML = `
+          <div>${row.device_id || "-"}</div>
+          <div>${row.payload?.soil_moisture ?? "-"}</div>
+          <div>${row.payload?.temperature ?? "-"}</div>
+          <div>${row.ts?.slice(0, 19) ?? "-"}</div>
+        `;
+        table.appendChild(div);
+      });
+    })
+    .catch(() => {});
+}
+
+function refreshWeather() {
+  if (!state.lastBbox) return;
+  const lat = (state.lastBbox[1] + state.lastBbox[3]) / 2;
+  const lon = (state.lastBbox[0] + state.lastBbox[2]) / 2;
+  fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+    .then((res) => res.json())
+    .then((data) => {
+      const provider = data.data && data.data.provider ? data.data.provider : "--";
+      document.getElementById("weatherStatus").innerText = provider;
+    })
+    .catch(() => {});
+}
+
+function runPrediction() {
+  const soil = parseFloat(document.getElementById("soilInput").value || "0");
+  const rain = parseFloat(document.getElementById("rainInput").value || "0");
+  const nitrogen = parseFloat(document.getElementById("nitrogenInput").value || "0");
+
+  const features = {
+    soil_moisture: soil,
+    rainfall: rain,
+    nitrogen,
+  };
+
+  fetch("/api/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ features }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) {
+        document.getElementById("latestPrediction").innerText = "--";
+        document.getElementById("latestSuggestion").innerText = data.error;
+        return;
+      }
+      document.getElementById("latestPrediction").innerText = data.prediction.toFixed(3);
+      document.getElementById("latestSuggestion").innerText = data.suggestion;
+      document.getElementById("suggestionBox").innerText = data.suggestion;
+    })
+    .catch(() => {});
+}
+
+function bindUI() {
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    refreshSensors();
+    refreshGrid();
+    refreshWeather();
+  });
+  document.getElementById("predictBtn").addEventListener("click", runPrediction);
+  document.getElementById("centerChinaBtn").addEventListener("click", () => {
+    map.setView([35.8617, 104.1954], 4.5);
+  });
+  document.getElementById("toggleGridBtn").addEventListener("click", () => {
+    gridVisible = !gridVisible;
+    if (gridLayer) {
+      if (gridVisible) {
+        gridLayer.addTo(map);
+      } else {
+        gridLayer.remove();
+      }
+    }
+  });
+
+  document.getElementById("provinceSelect").addEventListener("change", onProvinceChange);
+  document.getElementById("citySelect").addEventListener("change", onCityChange);
+  document.getElementById("districtSelect").addEventListener("change", onDistrictChange);
+  document.getElementById("districtSearch").addEventListener("input", onSearchInput);
+  document.addEventListener("click", (e) => {
+    const results = document.getElementById("searchResults");
+    if (!results.contains(e.target) && e.target.id !== "districtSearch") {
+      results.style.display = "none";
+    }
+  });
+}
+
+initMap();
+bindUI();
+
+function buildAdminHierarchy() {
+  state.adminIndex = {};
+  state.provinces = [];
+  state.citiesByProvince = {};
+  state.districtsByCity = {};
+  adminLayer.eachLayer((layer) => {
+    const props = layer.feature?.properties || {};
+    const code = String(props.adcode || "");
+    const name = props.name || "未知区域";
+    const provinceName = props.province_name || "";
+    const cityName = props.city_name || "";
+    const parent = String(props.parent_adcode || "");
+    if (!code) return;
+    state.adminIndex[code] = layer;
+    if (!parent) return;
+    if (code.length === 6) {
+      const provCode = code.slice(0, 2) + "0000";
+      const cityCode = code.slice(0, 4) + "00";
+      if (!state.districtsByCity[cityCode]) state.districtsByCity[cityCode] = [];
+      state.districtsByCity[cityCode].push({ code, name });
+      if (!state.citiesByProvince[provCode]) state.citiesByProvince[provCode] = [];
+      if (!state.citiesByProvince[provCode].some((c) => c.code === cityCode)) {
+        state.citiesByProvince[provCode].push({
+          code: cityCode,
+          name: cityName || cityCode,
+        });
+      }
+      if (!state.provinces.some((p) => p.code === provCode)) {
+        state.provinces.push({
+          code: provCode,
+          name: provinceName || provCode,
+        });
+      }
+    }
+  });
+}
+
+function populateProvinceSelect() {
+  const select = document.getElementById("provinceSelect");
+  select.innerHTML = "<option value=\"\">请选择省</option>";
+  state.provinces
+    .map((p) => ({
+      code: p.code,
+      name: p.name || p.code,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
+    .forEach((p) => {
+      const opt = document.createElement("option");
+      opt.value = p.code;
+      opt.textContent = `${p.name} (${p.code})`;
+      select.appendChild(opt);
+    });
+}
+
+function onProvinceChange() {
+  const provCode = document.getElementById("provinceSelect").value;
+  const citySelect = document.getElementById("citySelect");
+  const districtSelect = document.getElementById("districtSelect");
+  citySelect.disabled = !provCode;
+  districtSelect.disabled = true;
+  citySelect.innerHTML = "<option value=\"\">请选择市</option>";
+  districtSelect.innerHTML = "<option value=\"\">请选择县/区</option>";
+  if (!provCode) return;
+
+  const cities = state.citiesByProvince[provCode] || [];
+  cities
+    .map((c) => ({ code: c.code, name: c.name || c.code }))
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
+    .forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.code;
+      opt.textContent = `${c.name} (${c.code})`;
+      citySelect.appendChild(opt);
+    });
+}
+
+function onCityChange() {
+  const cityCode = document.getElementById("citySelect").value;
+  const districtSelect = document.getElementById("districtSelect");
+  districtSelect.disabled = !cityCode;
+  districtSelect.innerHTML = "<option value=\"\">请选择县/区</option>";
+  if (!cityCode) return;
+  const districts = state.districtsByCity[cityCode] || [];
+  districts
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
+    .forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.code;
+      opt.textContent = `${d.name} (${d.code})`;
+      districtSelect.appendChild(opt);
+    });
+}
+
+function onDistrictChange() {
+  const code = document.getElementById("districtSelect").value;
+  const layer = state.adminIndex[code];
+  if (layer) {
+    selectAdmin(layer.feature, layer);
+    map.fitBounds(layer.getBounds(), { padding: [30, 30] });
+  }
+}
+
+function onSearchInput(e) {
+  const value = e.target.value.trim();
+  const results = document.getElementById("searchResults");
+  results.innerHTML = "";
+  if (!value) {
+    results.style.display = "none";
+    return;
+  }
+  const matches = Object.keys(state.adminIndex)
+    .filter((code) => {
+      const name = state.adminIndex[code]?.feature?.properties?.name || "";
+      return name.includes(value) || code.includes(value);
+    })
+    .slice(0, 12);
+  matches.forEach((code) => {
+    const name = state.adminIndex[code].feature.properties.name || "未知区域";
+    const div = document.createElement("div");
+    div.className = "search-item";
+    div.textContent = `${name} (${code})`;
+    div.addEventListener("click", () => {
+      results.style.display = "none";
+      pickByCode(code);
+    });
+    results.appendChild(div);
+  });
+  results.style.display = matches.length ? "block" : "none";
+}
+
+function pickByCode(code) {
+  const layer = state.adminIndex[code];
+  if (!layer) return;
+  const props = layer.feature.properties || {};
+  const cityCode = code.slice(0, 4) + "00";
+  const provCode = code.slice(0, 2) + "0000";
+  setSelectValue("provinceSelect", provCode);
+  onProvinceChange();
+  setSelectValue("citySelect", cityCode);
+  onCityChange();
+  setSelectValue("districtSelect", code);
+  selectAdmin(layer.feature, layer);
+  map.fitBounds(layer.getBounds(), { padding: [30, 30] });
+}
+
+function setSelectValue(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = value;
+}
+
+
+
+

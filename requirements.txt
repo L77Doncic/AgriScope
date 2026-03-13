@@ -1,0 +1,6 @@
+﻿Flask==3.0.3
+paho-mqtt==1.6.1
+catboost==1.2.7
+pandas==2.2.2
+numpy==2.0.1
+requests==2.32.3

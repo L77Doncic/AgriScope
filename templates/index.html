@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>农业管理预测系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AgriScope</div>
+        <div class="brand-sub">CatBoost 智能预测</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">实时概览</div>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">在线设备</div>
+            <div class="metric-value" id="deviceCount">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">最新预测</div>
+            <div class="metric-value" id="latestPrediction">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">气象状态</div>
+            <div class="metric-value" id="weatherStatus">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">灌溉建议</div>
+            <div class="metric-value" id="latestSuggestion">--</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">区域筛选</div>
+        <div class="field">
+          <label>省</label>
+          <select id="provinceSelect">
+            <option value="">请选择省</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>市</label>
+          <select id="citySelect" disabled>
+            <option value="">请选择市</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>县/区</label>
+          <select id="districtSelect" disabled>
+            <option value="">请选择县/区</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>搜索（县/区）</label>
+          <div class="search-wrap">
+            <input id="districtSearch" placeholder="输入名称或代码进行搜索" />
+            <div id="searchResults" class="search-results"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>网格分辨率</label>
+          <select id="gridResolution">
+            <option value="1">1 km</option>
+            <option value="2">2 km</option>
+            <option value="5">5 km</option>
+          </select>
+        </div>
+        <button class="primary" id="refreshBtn">刷新数据</button>
+      </div>
+      <div class="panel">
+        <div class="panel-title">预测输入</div>
+        <div class="field">
+          <label>土壤湿度</label>
+          <input id="soilInput" type="number" step="0.01" value="0.3" />
+        </div>
+        <div class="field">
+          <label>降雨量 (mm)</label>
+          <input id="rainInput" type="number" step="0.1" value="2.0" />
+        </div>
+        <div class="field">
+          <label>氮含量</label>
+          <input id="nitrogenInput" type="number" step="0.01" value="0.25" />
+        </div>
+        <button class="ghost" id="predictBtn">执行预测</button>
+      </div>
+    </aside>
+    <main class="main">
+      <section class="hero">
+        <div>
+          <div class="hero-title">面向 IoT 的农业管理预测平台</div>
+          <div class="hero-sub">实时传感、气象驱动、1km 网格化决策</div>
+        </div>
+        <div class="hero-actions">
+          <button class="ghost" id="centerChinaBtn">定位中国</button>
+          <button class="primary" id="toggleGridBtn">显示网格</button>
+        </div>
+      </section>
+      <section class="map-panel">
+        <div id="map"></div>
+        <div class="map-overlay" id="mapInfo">选择一个市区县以查看数据</div>
+      </section>
+      <section class="bottom-panels">
+        <div class="panel wide">
+          <div class="panel-title">实时传感数据</div>
+          <div class="table" id="sensorTable"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">操作建议</div>
+          <div class="suggestion" id="suggestionBox">等待预测结果...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
