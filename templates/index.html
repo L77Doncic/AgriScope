@@ -25,12 +25,8 @@
             <div class="metric-value" id="deviceCount">--</div>
           </div>
           <div class="metric">
-            <div class="metric-label">气象状态</div>
-            <div class="metric-value" id="weatherStatus">--</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">灌溉建议</div>
-            <div class="metric-value" id="latestSuggestion">--</div>
+            <div class="metric-label">预测结果</div>
+            <div class="metric-value" id="latestPrediction">--</div>
           </div>
         </div>
       </div>
@@ -75,11 +71,13 @@
       <div class="panel">
         <div class="panel-title">气象与模型输入</div>
         <div class="feature-list">
-          <div class="feature-row"><span>土壤湿度</span><span id="inputSoil">--</span></div>
           <div class="feature-row"><span>降雨量 (mm)</span><span id="inputRainfall">--</span></div>
-          <div class="feature-row"><span>氮含量</span><span id="inputNitrogen">--</span></div>
           <div class="feature-row"><span>气温 (°C)</span><span id="inputTemp">--</span></div>
           <div class="feature-row"><span>太阳辐射 (W/m²)</span><span id="inputRadiation">--</span></div>
+          <div class="feature-row"><span>相对湿度 (%)</span><span id="inputHumidity">--</span></div>
+          <div class="feature-row"><span>风速 (m/s)</span><span id="inputWind">--</span></div>
+          <div class="feature-row"><span>云量 (%)</span><span id="inputCloud">--</span></div>
+          <div class="feature-row"><span>蒸散估计 (mm)</span><span id="inputEto">--</span></div>
         </div>
       </div>
     </aside>
@@ -90,7 +88,7 @@
           <div class="hero-sub">实时传感、气象驱动、1km 网格化决策</div>
         </div>
         <div class="hero-actions">
-          <button class="ghost" id="centerChinaBtn">定位中国</button>
+          <button class="ghost" id="predictBtn">执行预测</button>
           <button class="primary" id="toggleGridBtn">显示网格</button>
         </div>
       </section>
@@ -102,11 +100,13 @@
     <aside class="rightbar">
       <div class="panel">
         <div class="panel-title">实时传感数据</div>
+        <div class="feature-list">
+          <div class="feature-row"><span>土壤湿度</span><span id="sensorSoil">--</span></div>
+        </div>
         <div class="table" id="sensorTable"></div>
       </div>
       <div class="panel">
         <div class="panel-title">操作建议</div>
-        <div class="prediction-line">预测结果：<span id="latestPrediction">--</span></div>
         <div class="suggestion" id="suggestionBox">等待预测结果...</div>
       </div>
     </aside>

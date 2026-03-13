@@ -122,6 +122,8 @@ function refreshSensors() {
         table.appendChild(div);
       });
       state.latestSensor = rows.length ? rows[0].payload || {} : null;
+      document.getElementById("sensorSoil").innerText =
+        state.latestSensor?.soil_moisture ?? "--";
       updateModelInputs();
       tryAutoPredict();
     })
@@ -142,9 +144,11 @@ function refreshWeather() {
       const temp = current.temperature_2m ?? "--";
       const rain = current.precipitation ?? (hourly.precipitation ? hourly.precipitation[0] : "--");
       const radiation = hourly.shortwave_radiation ? hourly.shortwave_radiation[0] : "--";
-      state.weather = { temp, rain, radiation };
-      document.getElementById("weatherStatus").innerText =
-        `温度 ${temp}°C / 降雨 ${rain}mm / 辐射 ${radiation}`;
+      const humidity = current.relative_humidity_2m ?? "--";
+      const wind = current.wind_speed_10m ?? "--";
+      const cloud = current.cloud_cover ?? "--";
+      const eto = current.et0_fao_evapotranspiration ?? "--";
+      state.weather = { temp, rain, radiation, humidity, wind, cloud, eto };
       updateModelInputs();
       tryAutoPredict();
     })
@@ -183,8 +187,8 @@ function bindUI() {
     refreshWeather();
     centerToSelection();
   });
-  document.getElementById("centerChinaBtn").addEventListener("click", () => {
-    map.setView([35.8617, 104.1954], 4.5);
+  document.getElementById("predictBtn").addEventListener("click", () => {
+    runPrediction();
   });
   document.getElementById("toggleGridBtn").addEventListener("click", () => {
     gridVisible = !gridVisible;
@@ -404,29 +408,31 @@ function centerToSelection() {
 }
 
 function updateModelInputs() {
-  const soil = state.latestSensor?.soil_moisture;
-  const nitrogen = state.latestSensor?.nitrogen;
   const rain = state.weather?.rain;
   const temp = state.weather?.temp;
   const radiation = state.weather?.radiation;
-  document.getElementById("inputSoil").innerText = soil ?? "--";
+  const humidity = state.weather?.humidity;
+  const wind = state.weather?.wind;
+  const cloud = state.weather?.cloud;
+  const eto = state.weather?.eto;
   document.getElementById("inputRainfall").innerText = rain ?? "--";
-  document.getElementById("inputNitrogen").innerText = nitrogen ?? "--";
   document.getElementById("inputTemp").innerText = temp ?? "--";
   document.getElementById("inputRadiation").innerText = radiation ?? "--";
+  document.getElementById("inputHumidity").innerText = humidity ?? "--";
+  document.getElementById("inputWind").innerText = wind ?? "--";
+  document.getElementById("inputCloud").innerText = cloud ?? "--";
+  document.getElementById("inputEto").innerText = eto ?? "--";
 }
 
 function buildFeatureVector() {
   const soil = state.latestSensor?.soil_moisture;
-  const nitrogen = state.latestSensor?.nitrogen;
   const rain = state.weather?.rain;
-  if (soil == null || nitrogen == null || rain == null || rain === "--") {
+  if (soil == null || rain == null || rain === "--") {
     return null;
   }
   return {
     soil_moisture: Number(soil),
     rainfall: Number(rain),
-    nitrogen: Number(nitrogen),
   };
 }
 
