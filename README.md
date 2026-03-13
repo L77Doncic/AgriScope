@@ -46,6 +46,19 @@ python app.py
 
 默认使用 Open-Meteo；如需 ERA5 请在 `services/weather.py` 中替换 `_era5_placeholder`，并设置 `WEATHER_PROVIDER=era5`。
 
+## 大模型建议（ERNIE-5.0）
+
+使用环境变量启用：
+
+```bash
+set LLM_ENABLE=true
+set LLM_API_KEY=你的密钥
+set LLM_BASE_URL=https://aistudio.baidu.com/llm/lmapi/v3
+set LLM_MODEL=ernie-5.0-thinking-preview
+```
+
+若未启用，将使用内置规则引擎作为回退。
+
 ## 中国行政区数据
 
 请将真实行政区 GeoJSON 替换 `static/geo/china_admin_sample.geojson`。
