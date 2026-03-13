@@ -22,8 +22,8 @@ class WeatherProvider:
         params = {
             "latitude": lat,
             "longitude": lon,
-            "current": "temperature_2m,precipitation,cloud_cover,wind_speed_10m",
-            "hourly": "shortwave_radiation,precipitation",
+            "current": "temperature_2m,precipitation,cloud_cover,wind_speed_10m,relative_humidity_2m,et0_fao_evapotranspiration",
+            "hourly": "shortwave_radiation,precipitation,relative_humidity_2m,et0_fao_evapotranspiration",
         }
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()

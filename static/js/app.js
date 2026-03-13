@@ -156,10 +156,12 @@ function refreshWeather() {
 }
 
 function runPrediction() {
-  const features = buildFeatureVector();
-  if (!features) {
+  const result = buildFeatureVector();
+  if (!result.ok) {
+    alert(`预测缺少参数：${result.missing.join("、")}`);
     return;
   }
+  const features = result.features;
 
   fetch("/api/predict", {
     method: "POST",
@@ -427,18 +429,24 @@ function updateModelInputs() {
 function buildFeatureVector() {
   const soil = state.latestSensor?.soil_moisture;
   const rain = state.weather?.rain;
-  if (soil == null || rain == null || rain === "--") {
-    return null;
+  const missing = [];
+  if (soil == null) missing.push("土壤湿度");
+  if (rain == null || rain === "--") missing.push("降雨量");
+  if (missing.length) {
+    return { ok: false, missing };
   }
   return {
-    soil_moisture: Number(soil),
-    rainfall: Number(rain),
+    ok: true,
+    features: {
+      soil_moisture: Number(soil),
+      rainfall: Number(rain),
+    },
   };
 }
 
 function tryAutoPredict() {
-  const features = buildFeatureVector();
-  if (!features) return;
+  const result = buildFeatureVector();
+  if (!result.ok) return;
   runPrediction();
 }
 
