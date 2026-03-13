@@ -214,8 +214,9 @@ function buildAdminHierarchy() {
     const props = layer.feature?.properties || {};
     const code = String(props.adcode || "");
     const name = props.name || "未知区域";
-    const provinceName = props.province_name || "";
-    const cityName = props.city_name || "";
+    const provinceName =
+      props.province_name || props.provinceName || props.province || props.PROVINCE || "";
+    const cityName = props.city_name || props.cityName || props.city || props.CITY || "";
     if (!code) return;
     state.adminIndex[code] = layer;
     if (code.length === 6) {
@@ -248,7 +249,7 @@ function populateProvinceSelect() {
   state.provinces
     .map((p) => ({
       code: p.code,
-      name: p.name || state.provinceNames[p.code] || p.code,
+      name: p.name || state.provinceNames[p.code] || "未知省",
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
     .forEach((p) => {
@@ -277,7 +278,7 @@ function onProvinceChange() {
 
   const cities = state.citiesByProvince[provCode] || [];
   cities
-    .map((c) => ({ code: c.code, name: c.name || state.cityNames[c.code] || c.code }))
+    .map((c) => ({ code: c.code, name: c.name || state.cityNames[c.code] || "未知市" }))
     .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
     .forEach((c) => {
       const opt = document.createElement("option");
