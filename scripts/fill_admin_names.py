@@ -3,6 +3,15 @@ import json
 from typing import Dict, Tuple
 
 
+def normalize_code(code: str) -> str:
+    code = code.strip()
+    if not code:
+        return ""
+    if len(code) >= 6:
+        return code[:6]
+    return code.zfill(6)
+
+
 def load_area_codes(path: str) -> Dict[str, str]:
     for encoding in ("utf-8-sig", "gb18030", "gbk"):
         try:
@@ -12,7 +21,7 @@ def load_area_codes(path: str) -> Dict[str, str]:
                 for row in reader:
                     if not row:
                         continue
-                    code = row[0].strip()
+                    code = normalize_code(row[0])
                     name = row[1].strip() if len(row) > 1 else ""
                     if code and name:
                         data[code] = name
@@ -23,10 +32,7 @@ def load_area_codes(path: str) -> Dict[str, str]:
 
 
 def code_prefixes(adcode: str) -> Tuple[str, str, str]:
-    if len(adcode) >= 6:
-        ad6 = adcode[:6]
-    else:
-        ad6 = adcode.zfill(6)
+    ad6 = normalize_code(adcode)
     prov = ad6[:2] + "0000"
     city = ad6[:4] + "00"
     return prov, city, ad6
