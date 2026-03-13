@@ -263,7 +263,23 @@ button.ghost {
   .rightbar {
     padding-top: 0;
   }
+  .map-panel {
+    min-height: 50vh;
+  }
   #map {
-    height: 360px;
+    min-height: 50vh;
+  }
+}
+
+@media (max-width: 1200px) {
+  .app-shell {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+  .rightbar {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+  }
+  .rightbar .panel:first-child {
+    max-height: 260px;
   }
 }
