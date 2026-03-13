@@ -59,6 +59,18 @@ set LLM_MODEL=ernie-5.0-thinking-preview
 
 若未启用，将使用内置规则引擎作为回退。
 
+## 传感器模拟数据
+
+```bash
+python scripts/simulate_sensor.py
+```
+
+可通过环境变量控制：
+- `INGEST_URL` (默认 http://127.0.0.1:5000/api/ingest)
+- `ADMIN_CODE` (默认 110105)
+- `DEVICE_ID` (默认 sim-001)
+- `INTERVAL_SEC` (默认 5)
+
 ## 中国行政区数据
 
 请将真实行政区 GeoJSON 替换 `static/geo/china_admin_sample.geojson`。
