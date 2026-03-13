@@ -165,6 +165,7 @@ button.ghost {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 18px;
+  min-height: 100vh;
 }
 
 .hero {
@@ -196,11 +197,13 @@ button.ghost {
   overflow: hidden;
   background: #fff;
   box-shadow: 0 16px 30px var(--shadow);
-  min-height: 420px;
+  min-height: 520px;
+  display: flex;
 }
 
 #map {
-  height: 420px;
+  flex: 1;
+  min-height: 520px;
 }
 
 .map-overlay {
@@ -217,8 +220,14 @@ button.ghost {
 .rightbar {
   padding: 28px 22px;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto auto;
   gap: 18px;
+  align-content: start;
+}
+
+.rightbar .panel:first-child {
+  max-height: 340px;
+  overflow: auto;
 }
 
 .table {

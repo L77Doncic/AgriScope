@@ -216,10 +216,8 @@ function buildAdminHierarchy() {
     const name = props.name || "未知区域";
     const provinceName = props.province_name || "";
     const cityName = props.city_name || "";
-    const parent = String(props.parent_adcode || "");
     if (!code) return;
     state.adminIndex[code] = layer;
-    if (!parent) return;
     if (code.length === 6) {
       const provCode = code.slice(0, 2) + "0000";
       const cityCode = code.slice(0, 4) + "00";
@@ -259,6 +257,12 @@ function populateProvinceSelect() {
       opt.textContent = `${p.name} (${p.code})`;
       select.appendChild(opt);
     });
+  if (select.options.length === 1) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "未加载行政区数据";
+    select.appendChild(opt);
+  }
 }
 
 function onProvinceChange() {
