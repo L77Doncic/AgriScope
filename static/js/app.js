@@ -158,7 +158,7 @@ function refreshWeather() {
 function runPrediction() {
   const result = buildFeatureVector();
   if (!result.ok) {
-    alert(`预测缺少参数：${result.missing.join("、")}`);
+    showToast(`预测缺少参数：${result.missing.join("、")}`);
     return;
   }
   const features = result.features;
@@ -407,6 +407,18 @@ function centerToSelection() {
   if (hasBounds) {
     map.fitBounds(bounds, { padding: [30, 30] });
   }
+}
+
+let toastTimer = null;
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2400);
 }
 
 function updateModelInputs() {
