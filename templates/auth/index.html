@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AgriScope 登录</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/auth.css" />
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-panel">
+      <div class="brand">AgriScope</div>
+      <div class="subtitle">农业管理预测系统</div>
+      <div class="tabs">
+        <button class="tab active" data-tab="login">登录</button>
+        <button class="tab" data-tab="register">注册</button>
+      </div>
+      <div class="form" id="loginForm">
+        <label>账号</label>
+        <input id="loginUser" placeholder="手机号 / 邮箱" />
+        <label>密码</label>
+        <input id="loginPass" type="password" placeholder="请输入密码" />
+        <button class="primary" id="loginBtn">进入系统</button>
+      </div>
+      <div class="form hidden" id="registerForm">
+        <label>姓名</label>
+        <input id="regName" placeholder="你的姓名" />
+        <label>账号</label>
+        <input id="regUser" placeholder="手机号 / 邮箱" />
+        <label>密码</label>
+        <input id="regPass" type="password" placeholder="设置密码" />
+        <button class="primary" id="registerBtn">创建账号</button>
+      </div>
+      <div class="hint">当前为本地演示模式，提交后直接进入主页。</div>
+    </div>
+  </div>
+  <script src="/static/js/auth.js"></script>
+</body>
+</html>

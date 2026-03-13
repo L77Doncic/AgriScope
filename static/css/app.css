@@ -169,6 +169,22 @@ button {
   cursor: pointer;
 }
 
+.hero-actions a {
+  text-decoration: none;
+}
+
+.hero-actions .ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid rgba(31, 27, 22, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
 button.primary {
   background: var(--accent);
   color: #fff;

@@ -45,6 +45,10 @@ def create_app() -> Flask:
     def index():
         return render_template("index.html")
 
+    @app.route("/auth")
+    def auth():
+        return render_template("auth/index.html")
+
     @app.route("/api/health")
     def health():
         return jsonify({"ok": True, "ts": datetime.now(timezone.utc).isoformat()})
