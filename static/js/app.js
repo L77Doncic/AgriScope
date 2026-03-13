@@ -10,6 +10,8 @@ const state = {
   provinces: [],
   citiesByProvince: {},
   districtsByCity: {},
+  provinceNames: {},
+  cityNames: {},
 };
 
 function initMap() {
@@ -52,6 +54,12 @@ function selectAdmin(feature, layer) {
   const bbox = layer.getBounds();
   state.lastBbox = [bbox.getWest(), bbox.getSouth(), bbox.getEast(), bbox.getNorth()];
   document.getElementById("mapInfo").innerText = `${name} (${adminCode})`;
+  const cityCode = String(adminCode).slice(0, 4) + "00";
+  const provCode = String(adminCode).slice(0, 2) + "0000";
+  setSelectValue("provinceSelect", provCode);
+  onProvinceChange();
+  setSelectValue("citySelect", cityCode);
+  onCityChange();
   setSelectValue("districtSelect", adminCode);
   refreshGrid();
   refreshSensors();
@@ -92,7 +100,7 @@ function refreshGrid() {
 }
 
 function refreshSensors() {
-  const adminCode = document.getElementById("adminCodeSelect").value || "";
+  const adminCode = document.getElementById("districtSelect").value || "";
   fetch(`/api/latest?admin_code=${adminCode}&limit=50`)
     .then((res) => res.json())
     .then((data) => {
@@ -163,6 +171,7 @@ function bindUI() {
     refreshSensors();
     refreshGrid();
     refreshWeather();
+    centerToSelection();
   });
   document.getElementById("predictBtn").addEventListener("click", runPrediction);
   document.getElementById("centerChinaBtn").addEventListener("click", () => {
@@ -199,6 +208,8 @@ function buildAdminHierarchy() {
   state.provinces = [];
   state.citiesByProvince = {};
   state.districtsByCity = {};
+  state.provinceNames = {};
+  state.cityNames = {};
   adminLayer.eachLayer((layer) => {
     const props = layer.feature?.properties || {};
     const code = String(props.adcode || "");
@@ -212,6 +223,8 @@ function buildAdminHierarchy() {
     if (code.length === 6) {
       const provCode = code.slice(0, 2) + "0000";
       const cityCode = code.slice(0, 4) + "00";
+      if (provinceName) state.provinceNames[provCode] = provinceName;
+      if (cityName) state.cityNames[cityCode] = cityName;
       if (!state.districtsByCity[cityCode]) state.districtsByCity[cityCode] = [];
       state.districtsByCity[cityCode].push({ code, name });
       if (!state.citiesByProvince[provCode]) state.citiesByProvince[provCode] = [];
@@ -237,7 +250,7 @@ function populateProvinceSelect() {
   state.provinces
     .map((p) => ({
       code: p.code,
-      name: p.name || p.code,
+      name: p.name || state.provinceNames[p.code] || p.code,
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
     .forEach((p) => {
@@ -260,7 +273,7 @@ function onProvinceChange() {
 
   const cities = state.citiesByProvince[provCode] || [];
   cities
-    .map((c) => ({ code: c.code, name: c.name || c.code }))
+    .map((c) => ({ code: c.code, name: c.name || state.cityNames[c.code] || c.code }))
     .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
     .forEach((c) => {
       const opt = document.createElement("option");
@@ -343,6 +356,37 @@ function setSelectValue(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
   el.value = value;
+}
+
+function centerToSelection() {
+  const districtCode = document.getElementById("districtSelect").value;
+  const cityCode = document.getElementById("citySelect").value;
+  const provCode = document.getElementById("provinceSelect").value;
+  if (districtCode && state.adminIndex[districtCode]) {
+    map.fitBounds(state.adminIndex[districtCode].getBounds(), { padding: [30, 30] });
+    return;
+  }
+  const bounds = L.latLngBounds();
+  let hasBounds = false;
+  const prefix = districtCode || cityCode || provCode;
+  if (!prefix) return;
+  adminLayer.eachLayer((layer) => {
+    const code = String(layer.feature?.properties?.adcode || "");
+    if (!code) return;
+    if (prefix.length === 6 && code === prefix) {
+      bounds.extend(layer.getBounds());
+      hasBounds = true;
+    } else if (prefix.length === 4 && code.startsWith(prefix.slice(0, 4))) {
+      bounds.extend(layer.getBounds());
+      hasBounds = true;
+    } else if (prefix.length === 2 && code.startsWith(prefix.slice(0, 2))) {
+      bounds.extend(layer.getBounds());
+      hasBounds = true;
+    }
+  });
+  if (hasBounds) {
+    map.fitBounds(bounds, { padding: [30, 30] });
+  }
 }
 
 

@@ -21,7 +21,7 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(0, 1fr) 320px;
   min-height: 100vh;
 }
 
@@ -96,6 +96,13 @@ body {
   margin-bottom: 12px;
 }
 
+.hint {
+  font-size: 12px;
+  color: rgba(31, 27, 22, 0.6);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 input, select {
   padding: 10px 12px;
   border-radius: 10px;
@@ -156,7 +163,7 @@ button.ghost {
 .main {
   padding: 28px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   gap: 18px;
 }
 
@@ -207,15 +214,11 @@ button.ghost {
   font-size: 12px;
 }
 
-.bottom-panels {
+.rightbar {
+  padding: 28px 22px;
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr auto;
   gap: 18px;
-}
-
-.panel.wide {
-  display: flex;
-  flex-direction: column;
 }
 
 .table {
@@ -248,8 +251,8 @@ button.ghost {
   .sidebar {
     position: static;
   }
-  .bottom-panels {
-    grid-template-columns: 1fr;
+  .rightbar {
+    padding-top: 0;
   }
   #map {
     height: 360px;

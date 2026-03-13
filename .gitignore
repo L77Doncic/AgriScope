@@ -1,0 +1,10 @@
+data/
+output/
+*.cbm
+*.db
+static/geo/china_admin_sample.geojson
+data/admin_cache/
+data/area_code_2024.csv
+data/area_code_2024.csv.gz
+data/geoBoundaries-CHN-ADM3_simplified.geojson
+data/geoBoundaries-CHN-ADM3_simplified_download.geojson

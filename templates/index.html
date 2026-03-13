@@ -74,6 +74,7 @@
           </select>
         </div>
         <button class="primary" id="refreshBtn">刷新数据</button>
+        <div class="hint">刷新将同步传感与气象数据，并定位到选中区域。</div>
       </div>
       <div class="panel">
         <div class="panel-title">预测输入</div>
@@ -107,17 +108,17 @@
         <div id="map"></div>
         <div class="map-overlay" id="mapInfo">选择一个市区县以查看数据</div>
       </section>
-      <section class="bottom-panels">
-        <div class="panel wide">
-          <div class="panel-title">实时传感数据</div>
-          <div class="table" id="sensorTable"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-title">操作建议</div>
-          <div class="suggestion" id="suggestionBox">等待预测结果...</div>
-        </div>
-      </section>
     </main>
+    <aside class="rightbar">
+      <div class="panel">
+        <div class="panel-title">实时传感数据</div>
+        <div class="table" id="sensorTable"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">操作建议</div>
+        <div class="suggestion" id="suggestionBox">等待预测结果...</div>
+      </div>
+    </aside>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
