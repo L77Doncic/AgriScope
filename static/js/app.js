@@ -25,23 +25,26 @@ function initMap() {
     attribution: "© OpenStreetMap",
   }).addTo(map);
 
-  setSelectsEnabled(false);
-  document.getElementById("mapInfo").innerText = "正在加载行政区数据...";
   fetch("/static/geo/china_admin_sample.geojson")
     .then((res) => res.json())
     .then((geo) => {
-      adminLayer = L.featureGroup().addTo(map);
-      addFeaturesInChunks(geo.features || [], 300, () => {
-        map.fitBounds(adminLayer.getBounds(), { padding: [30, 30] });
-        buildAdminHierarchy();
-        populateProvinceSelect();
-        setSelectsEnabled(true);
-        document.getElementById("mapInfo").innerText = "选择一个市区县以查看数据";
-      });
+      adminLayer = L.geoJSON(geo, {
+        style: {
+          color: "#1a8a5b",
+          weight: 2,
+          fillColor: "#f3b24a",
+          fillOpacity: 0.2,
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on("click", () => selectAdmin(feature, layer));
+        },
+      }).addTo(map);
+      map.fitBounds(adminLayer.getBounds(), { padding: [30, 30] });
+      buildAdminHierarchy();
+      populateProvinceSelect();
     })
     .catch(() => {
       document.getElementById("mapInfo").innerText = "未加载行政区 GeoJSON，请替换 static/geo/china_admin_sample.geojson";
-      setSelectsEnabled(true);
     });
 }
 
@@ -257,33 +260,6 @@ function buildAdminHierarchy() {
   });
 }
 
-function addFeaturesInChunks(features, chunkSize, done) {
-  let index = 0;
-  const options = {
-    style: {
-      color: "#1a8a5b",
-      weight: 2,
-      fillColor: "#f3b24a",
-      fillOpacity: 0.2,
-    },
-    onEachFeature: (feature, layer) => {
-      layer.on("click", () => selectAdmin(feature, layer));
-    },
-  };
-
-  function step() {
-    const slice = features.slice(index, index + chunkSize);
-    if (!slice.length) {
-      done();
-      return;
-    }
-    L.geoJSON({ type: "FeatureCollection", features: slice }, options).addTo(adminLayer);
-    index += chunkSize;
-    setTimeout(step, 0);
-  }
-  step();
-}
-
 function populateProvinceSelect() {
   const select = document.getElementById("provinceSelect");
   select.innerHTML = "<option value=\"\">请选择省</option>";
@@ -402,15 +378,6 @@ function setSelectValue(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
   el.value = value;
-}
-
-function setSelectsEnabled(enabled) {
-  const prov = document.getElementById("provinceSelect");
-  const city = document.getElementById("citySelect");
-  const dist = document.getElementById("districtSelect");
-  if (prov) prov.disabled = !enabled;
-  if (city) city.disabled = !enabled;
-  if (dist) dist.disabled = !enabled;
 }
 
 function centerToSelection() {
