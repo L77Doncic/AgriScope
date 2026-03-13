@@ -40,10 +40,14 @@ class Storage:
 
     def insert_sensor_reading(self, payload: Dict[str, Any]) -> None:
         ts = payload.get("ts") or datetime.now(timezone.utc).isoformat()
-        device_id = payload.get("device_id")
-        admin_code = payload.get("admin_code")
-        lat = payload.get("lat")
-        lon = payload.get("lon")
+        device_id = payload.get("device_id", "dev-test")
+        admin_code = payload.get("admin_code", "")
+        lat = payload.get("lat", 0)
+        lon = payload.get("lon", 0)
+        payload.setdefault("soil_moisture", 0)
+        payload.setdefault("temperature", 0)
+        payload.setdefault("rainfall", 0)
+        payload.setdefault("nitrogen", 0)
         raw = json.dumps(payload, ensure_ascii=False)
 
         with self._connect() as conn:
