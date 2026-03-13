@@ -173,11 +173,13 @@ function runPrediction() {
       if (data.error) {
         document.getElementById("latestPrediction").innerText = "--";
         document.getElementById("latestSuggestion").innerText = data.error;
+        renderLlmSuggestion(null);
         return;
       }
       document.getElementById("latestPrediction").innerText = data.prediction.toFixed(3);
       document.getElementById("latestSuggestion").innerText = data.suggestion;
       document.getElementById("suggestionBox").innerText = data.suggestion;
+      renderLlmSuggestion(data.suggestion);
     })
     .catch(() => {});
 }
@@ -406,6 +408,44 @@ function centerToSelection() {
   });
   if (hasBounds) {
     map.fitBounds(bounds, { padding: [30, 30] });
+  }
+}
+
+function renderLlmSuggestion(raw) {
+  const container = document.getElementById("llmContent");
+  if (!container) return;
+  if (!raw) {
+    container.textContent = "等待预测结果...";
+    return;
+  }
+  let payload = null;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    container.textContent = raw;
+    return;
+  }
+  const rows = [];
+  if (payload.summary) rows.push(["概述", payload.summary]);
+  if (payload.irrigation) rows.push(["灌溉", payload.irrigation]);
+  if (payload.fertilization) rows.push(["施肥", payload.fertilization]);
+  if (payload.soil) rows.push(["土壤", payload.soil]);
+  if (payload.risk) rows.push(["风险", payload.risk]);
+  container.innerHTML = "";
+  rows.forEach(([label, text]) => {
+    const div = document.createElement("div");
+    div.className = "llm-item";
+    div.innerHTML = `<div class="llm-label">${label}</div><div>${text}</div>`;
+    container.appendChild(div);
+  });
+  if (Array.isArray(payload.actions) && payload.actions.length) {
+    const div = document.createElement("div");
+    div.className = "llm-item";
+    div.innerHTML = `<div class="llm-label">行动</div><div>${payload.actions.join("；")}</div>`;
+    container.appendChild(div);
+  }
+  if (!rows.length && !payload.actions) {
+    container.textContent = raw;
   }
 }
 

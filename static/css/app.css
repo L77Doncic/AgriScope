@@ -274,6 +274,37 @@ button.ghost {
   border-radius: 14px;
 }
 
+.llm-box {
+  margin-top: 12px;
+  padding: 14px;
+  background: #fffaf2;
+  border: 1px solid rgba(31, 27, 22, 0.08);
+  border-radius: 14px;
+}
+
+.llm-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.llm-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(31, 27, 22, 0.8);
+  display: grid;
+  gap: 6px;
+}
+
+.llm-item {
+  display: flex;
+  gap: 8px;
+}
+
+.llm-label {
+  min-width: 70px;
+  font-weight: 600;
+}
+
 .toast {
   position: fixed;
   left: 50%;
