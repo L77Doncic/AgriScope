@@ -12,6 +12,8 @@ const state = {
   districtsByCity: {},
   provinceNames: {},
   cityNames: {},
+  latestSensor: null,
+  weather: null,
 };
 
 function initMap() {
@@ -119,6 +121,9 @@ function refreshSensors() {
         `;
         table.appendChild(div);
       });
+      state.latestSensor = rows.length ? rows[0].payload || {} : null;
+      updateModelInputs();
+      tryAutoPredict();
     })
     .catch(() => {});
 }
@@ -130,22 +135,27 @@ function refreshWeather() {
   fetch(`/api/weather?lat=${lat}&lon=${lon}`)
     .then((res) => res.json())
     .then((data) => {
-      const provider = data.data && data.data.provider ? data.data.provider : "--";
-      document.getElementById("weatherStatus").innerText = provider;
+      const payload = data.data || {};
+      const weather = payload.data || {};
+      const current = weather.current || {};
+      const hourly = weather.hourly || {};
+      const temp = current.temperature_2m ?? "--";
+      const rain = current.precipitation ?? (hourly.precipitation ? hourly.precipitation[0] : "--");
+      const radiation = hourly.shortwave_radiation ? hourly.shortwave_radiation[0] : "--";
+      state.weather = { temp, rain, radiation };
+      document.getElementById("weatherStatus").innerText =
+        `温度 ${temp}°C / 降雨 ${rain}mm / 辐射 ${radiation}`;
+      updateModelInputs();
+      tryAutoPredict();
     })
     .catch(() => {});
 }
 
 function runPrediction() {
-  const soil = parseFloat(document.getElementById("soilInput").value || "0");
-  const rain = parseFloat(document.getElementById("rainInput").value || "0");
-  const nitrogen = parseFloat(document.getElementById("nitrogenInput").value || "0");
-
-  const features = {
-    soil_moisture: soil,
-    rainfall: rain,
-    nitrogen,
-  };
+  const features = buildFeatureVector();
+  if (!features) {
+    return;
+  }
 
   fetch("/api/predict", {
     method: "POST",
@@ -173,7 +183,6 @@ function bindUI() {
     refreshWeather();
     centerToSelection();
   });
-  document.getElementById("predictBtn").addEventListener("click", runPrediction);
   document.getElementById("centerChinaBtn").addEventListener("click", () => {
     map.setView([35.8617, 104.1954], 4.5);
   });
@@ -392,6 +401,39 @@ function centerToSelection() {
   if (hasBounds) {
     map.fitBounds(bounds, { padding: [30, 30] });
   }
+}
+
+function updateModelInputs() {
+  const soil = state.latestSensor?.soil_moisture;
+  const nitrogen = state.latestSensor?.nitrogen;
+  const rain = state.weather?.rain;
+  const temp = state.weather?.temp;
+  const radiation = state.weather?.radiation;
+  document.getElementById("inputSoil").innerText = soil ?? "--";
+  document.getElementById("inputRainfall").innerText = rain ?? "--";
+  document.getElementById("inputNitrogen").innerText = nitrogen ?? "--";
+  document.getElementById("inputTemp").innerText = temp ?? "--";
+  document.getElementById("inputRadiation").innerText = radiation ?? "--";
+}
+
+function buildFeatureVector() {
+  const soil = state.latestSensor?.soil_moisture;
+  const nitrogen = state.latestSensor?.nitrogen;
+  const rain = state.weather?.rain;
+  if (soil == null || nitrogen == null || rain == null || rain === "--") {
+    return null;
+  }
+  return {
+    soil_moisture: Number(soil),
+    rainfall: Number(rain),
+    nitrogen: Number(nitrogen),
+  };
+}
+
+function tryAutoPredict() {
+  const features = buildFeatureVector();
+  if (!features) return;
+  runPrediction();
 }
 
 
